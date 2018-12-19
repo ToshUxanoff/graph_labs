@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <div>
+        <canvas id="origin" height=300 width=300></canvas>
+        <canvas id="sobel" height=300 width=300></canvas>
+    </div>
+    <script>
+        var origin = document.getElementById("origin");
+        var sobel = document.getElementById("sobel");
+        var ctx1 = origin.getContext("2d");
+        var ctx2 = sobel.getContext("2d");
+
+        var img = new Image();
+        img.src = 'image.png';
+        img.onload = function() {
+            var width = img.naturalWidth;
+            var height = img.naturalHeight;
+
+
+            origin.width = width;
+            origin.height = height;
+            ctx1.drawImage(img, 0, 0);
+            var originData = ctx1.getImageData(0, 0, width, height);
+            sobel.width = width;
+            sobel.height = height;
+            var sobelData = ctx2.createImageData(width, height);
+
+
+            function OperSob(x, y, origin, sobel) {
+                if (x == 0 || y == 0 || x == width - 1 || y == height - 1) {
+                    var coord = 4 * (y * height + x)
+                    for (var i = 0; i < 4; i++) {
+                        sobel[coord + i] = 0;
+                    }
+                }
+                else{
+                    var operator = [[-1, -2, -1], 
+                                    [ 0,  0,  0], 
+                                    [ 1,  2,  1]];
+                    var sumX = [0, 0, 0];
+                    var sumY = [0, 0, 0];
+                    var coord = 0;
+                    for (var deltaY = 0; deltaY < 3; deltaY++) {
+                        for (var deltaX = 0; deltaX < 3; deltaX++) {
+                            coord =  4 * ((y + deltaY - 1) * height + (x + deltaX - 1));
+                            for (var i = 0; i < 3; i++) {
+                                sumX[i] += origin[coord + i] * operator[deltaX][deltaY];
+                                sumY[i] += origin[coord + i] * operator[deltaY][deltaX];
+                            }
+                        }
+                    }
+                    coord = 4  * (y * height + x);
+                    sobel[coord] = (Math.sqrt(sumX[0] * sumX[0] + sumY[0] * sumY[0]) +
+                                    Math.sqrt(sumX[1] * sumX[1] + sumY[1] * sumY[1]) +
+                                    Math.sqrt(sumX[2] * sumX[2] + sumY[2] * sumY[2]))/10;
+                    sobel[coord + 1] = sobel[coord];
+                    sobel[coord + 2] = sobel[coord];
+                    sobel[coord + 3] = 255;
+                }
+            }
+
+
+            for (var y = 0; y < height; y++)
+                for (var x = 0; x < width; x++)
+                    OperSob(x, y, originData.data, sobelData.data);
+            ctx2.putImageData(sobelData, 0, 0);
+        }
+    </script>
+</body>
+</html>
